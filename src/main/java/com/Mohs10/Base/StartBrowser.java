@@ -1,5 +1,5 @@
 package com.Mohs10.Base;
-
+ 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -8,9 +8,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
 import java.util.Properties;
-
+import java.util.concurrent.TimeUnit;
+ 
 import org.apache.log4j.xml.DOMConfigurator;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxOptions;
@@ -22,24 +24,26 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Parameters;
-
+ 
 import com.Mohs10.utility.ExtentReport;
 import com.Mohs10.utility.Log;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
-
+ 
+import io.github.bonigarcia.wdm.WebDriverManager;
+ 
 public class StartBrowser {
 	EdgeOptions edgeOptions = new EdgeOptions();
 	FirefoxOptions fireOptions = new FirefoxOptions();
 	ChromeOptions chromeOptions = new ChromeOptions();
 	public static WebDriver driver;
 	public static Properties prop;
-
+ 
 	// set up report
 	public static ExtentTest parentTest;
 	public static ExtentTest childTest;
 	public static ExtentReports extent;
-
+ 
 	// loadConfig method is to load the configuration
 	@BeforeSuite(groups = { "Smoke", "Sanity", "Regression" })
 	public void loadConfig() throws Throwable {
@@ -47,30 +51,30 @@ public class StartBrowser {
 		ExtentReport.setExtent();
 		DOMConfigurator.configure("C:\\Users\\DELL\\Downloads\\Production-Painite_Aug_2023 (1)\\Production-Painite_Aug_2023\\src\\main\\resources\\log4j2.xml");
 		Log.info("This is before test method");
-
+ 
 		try {
 			prop = new Properties();
 			FileInputStream ip = new FileInputStream(
 					System.getProperty("user.dir") + "/src/main/resources/Config.properties");
 			prop.load(ip);
-
+ 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
+ 
 	@BeforeMethod
 	public void methodName(Method method) {
 		// Create a parent test in the extent report with the name of the test method
 		parentTest = extent.createTest(method.getName());
 	}
-
+ 
 	@Parameters(value = { "browser" })
-	@BeforeClass
-	public void browserSetup(String browserName) throws Throwable {
-
+	//@BeforeClass
+	/*public void browserSetup(String browserName) throws Throwable {
+ 
 		// Setup WebDriver for browsers
 		if (browserName.equalsIgnoreCase("chrome")) {
 			System.out.println("Chrome browser started");
@@ -88,7 +92,7 @@ public class StartBrowser {
 			}
 		} else if (browserName.equalsIgnoreCase("Edge")) {
 			System.out.println("Edge browser started");
-
+ 
 			try {
 				driver = new RemoteWebDriver(new URL("http://localhost:4444/"), edgeOptions);
 			} catch (MalformedURLException e) {
@@ -100,7 +104,7 @@ public class StartBrowser {
 			Reporter.log("Invalid browser name provided: " + browserName, true);
 			return;
 		}
-
+ 
 		// Maximize the browser window
 		driver.manage().window().maximize();
 		// Delete all the cookies
@@ -109,15 +113,24 @@ public class StartBrowser {
 		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 		// Set PageLoad TimeOuts
 		driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(40));
-	}
-
+	}*/
+	@BeforeClass
+	  public void beforeClass() {
+		  WebDriverManager.chromedriver().setup();
+		 // WebDriverManager.firefoxdriver().setup();
+		  //WebDriverManager.edgedriver().setup();
+		  driver = new ChromeDriver();
+		  driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		  driver.manage().window().maximize();
+	  }
+ 
 	@AfterClass
 	public void afterClass() {
 		driver.quit();
 		extent.flush();
-
+ 
 	}
-
+ 
 	@AfterSuite(groups = { "Smoke", "Regression", "Sanity" })
 	public void afterSuite() {
 		ExtentReport.endReport();
